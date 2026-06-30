@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm-client"
+version = "0.1.0"
+description = "Cliente LLM productivo: streaming, retries, fallback y observabilidad de coste."
+requires-python = ">=3.10"
+dependencies = ["anthropic>=0.113", "httpx"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.setuptools]
+packages = ["llm_client"]
