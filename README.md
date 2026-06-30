@@ -1,83 +1,126 @@
 # llm-client
 
-Capa de cliente LLM lista para producción sobre el SDK de Anthropic. No es un
-`messages.create()` suelto: es lo que lo rodea —streaming, retries, fallback,
-timeouts y observabilidad de coste/tokens— que hace que un workflow no se caiga
-cuando el proveedor devuelve un 429/529 bajo carga.
+A production-ready LLM client layer on top of the Anthropic SDK. Not a bare
+`messages.create()` call: it's everything around it —streaming, retries, fallback,
+timeouts and cost/token observability— that keeps a workflow from falling over
+when the provider returns a 429/529 under load.
 
-## Por qué existe
+## Why it exists
 
-Todo sistema GenAI productivo se apoya en una capa de cliente fiable y observable.
-Sin ella, RAG, agentes y evals se construyen sobre arena. Este repo es el primer
-ladrillo de un futuro *model gateway*.
+Every production GenAI system rests on a reliable, observable client layer.
+Without one, RAG, agents and evals are built on sand. This repo is the first
+brick of a future *model gateway*.
 
-## Instalar y correr
+## Running locally
+
+### 1. Set up the virtual environment
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv
+source .venv/bin/activate          # macOS/Linux  (Windows: .venv\Scripts\activate)
 pip install -e ".[dev]"
-python -m pytest -q          # 6 tests, sin gastar API (SDK mockeado)
 ```
 
-Ejecución real (requiere `ANTHROPIC_API_KEY`):
+> If `python` resolves to Python 2 on your machine (you'll see a
+> `Non-ASCII character` SyntaxError), use `python3` or call the venv binary
+> directly: `.venv/bin/python ...`.
+
+### 2. Run the unit tests (no API cost)
+
+```bash
+python -m pytest -q                # 7 tests, SDK is mocked — no API calls, no spend
+```
+
+### 3. Real run (hits the API, costs a few cents)
+
+Provide your key, either as an environment variable:
 
 ```bash
 export ANTHROPIC_API_KEY="sk-ant-..."
-python examples/real_run.py
 ```
 
-## Contrato
+…or in a `.env` file (already gitignored) that you load before running:
 
-`ProductionLLMClient.complete()` **nunca** propaga una excepción de red/SDK hacia
-arriba. Devuelve siempre un `LLMResult` con `status`:
+```bash
+set -a && source .env && set +a
+```
 
-| status | significado |
+Then run the example. **If your shell sets `ANTHROPIC_BASE_URL`** (e.g. a corporate
+proxy that intercepts the Anthropic SDK), override it to reach the public API
+directly — otherwise your request is routed to that proxy and may be blocked:
+
+```bash
+ANTHROPIC_BASE_URL=https://api.anthropic.com python examples/real_run.py
+```
+
+If `ANTHROPIC_BASE_URL` is not set in your environment, you can drop that prefix.
+
+## Contract
+
+`ProductionLLMClient.complete()` **never** propagates a network/SDK exception
+upward. It always returns an `LLMResult` with a `status`:
+
+| status | meaning |
 |---|---|
-| `ok` | respuesta válida (primario o fallback) |
-| `error` | error **permanente** (400/401/403/404/422): la request hay que corregirla |
-| `unavailable` | retries de primario **y** fallback agotados: degradación elegante |
+| `ok` | valid response (primary or fallback) |
+| `error` | **permanent** error (400/401/403/404/422): the request must be fixed |
+| `unavailable` | primary retries **and** fallback exhausted: graceful degradation |
 
-## Decisiones y trade-offs
+## Design decisions & trade-offs
 
-- **Solo se reintentan los transitorios** (429, 529, errores de conexión). Los
-  permanentes fallan rápido: reintentarlos da el mismo error y quema latencia/dinero.
-- **El fallback se dispara solo en transitorios**, no en permanentes (otro modelo
-  no arregla un prompt mal formado).
-- **`max_retries` configurable (default 3).** Más retries = más resiliencia pero
-  peor latencia de cola (p99): cada retry suma espera + nueva llamada.
-- **Timeout explícito (default 30s).** Corto protege p99 pero mata llamadas lentas
-  legítimas; largo evita falsos negativos pero deja colgado el workflow.
-- **Coste con precios fechados** (`pricing.py`, verificados 2026-06-30). Modelo
-  desconocido → coste 0 (no inventamos precios). Los precios cambian: revísalos.
+- **Only transient errors are retried** (429, 529, connection errors). Permanent
+  ones fail fast: retrying them returns the same error and burns latency/money.
+- **Fallback fires only on transient errors**, not permanent ones (another model
+  won't fix a malformed prompt).
+- **`max_retries` is configurable (default 3).** More retries = more resilience but
+  worse tail latency (p99): each retry adds wait + a new call.
+- **Explicit timeout (default 30s).** Short protects p99 but kills legitimately slow
+  calls; long avoids false negatives but leaves the workflow hanging.
+- **Cost uses dated prices** (`pricing.py`, verified 2026-06-30). Unknown model →
+  cost 0 (we don't invent prices). Prices change: re-check them.
 
-## Riesgos conocidos (lo que aún NO resuelve)
+## Known risks (what it does NOT solve yet)
 
-- **El fallback a modelo más barato puede degradar calidad en silencio.** Para un
-  *quality gate* (p.ej. code review) esto es peligroso: preferible `unavailable` +
-  revisión humana que una review peor tratada como fiable. Esta política de fallback
-  por-tarea es trabajo futuro.
-- **El trace registra el `LLMResult` completo**: no debe incluir PII en `text` en un
-  entorno real (pendiente para C-E6).
-- Coste por *request*, no por *workflow*: la agregación por unidad de negocio se
-  construye encima (C-F1).
+- **Falling back to a cheaper model can silently degrade quality.** For a *quality
+  gate* (e.g. code review) this is dangerous: better `unavailable` + human review
+  than a worse review treated as trustworthy. Per-task fallback policy is future work.
+- **The trace logs the full `LLMResult`**: it must not include PII in `text` in a
+  real environment (pending, C-E6).
+- Cost is per *request*, not per *workflow*: aggregation by business unit is built
+  on top (C-F1).
 
-## Cómo se evalúa
+## How it's evaluated
 
-- `tests/test_retries.py` — transitorio en primario → fallback → `ok`.
-- `tests/test_degradation.py` — primario + fallback caen → `unavailable` (sin excepción);
-  permanente → `error` sin intentar fallback.
-- `tests/test_cost.py` — coste correcto; lectura de cache = 0.1× del input base.
-- CI (`.github/workflows/ci.yml`) corre la suite en cada push/PR.
+- `tests/test_retries.py` — transient on primary → fallback → `ok`; primary ok marks
+  `used_fallback=False`.
+- `tests/test_degradation.py` — primary + fallback both fail → `unavailable` (no
+  exception); permanent → `error` without trying the fallback.
+- `tests/test_cost.py` — correct cost; cache read = 0.1× of base input; unknown
+  model costs 0.
+- CI (`.github/workflows/ci.yml`) runs the suite on every push/PR.
 
-## Ejecución real (trace end-to-end)
+## Real run (end-to-end trace)
 
-> Pega aquí la salida de `python examples/real_run.py` tras configurar la key.
+Output of `python examples/real_run.py` against `api.anthropic.com` (2026-06-30):
 
 ```text
-(pendiente: ejecutar y pegar el trace de status/model/tokens/latency/cost)
+INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+INFO trace {'text': 'Hola', 'model': 'claude-sonnet-4-6', 'status': 'ok',
+            'input_tokens': 26, 'output_tokens': 6, 'cache_read': 0, 'cache_write': 0,
+            'latency_s': 1.455, 'cost_usd': 0.000168, 'used_fallback': False, 'reason': None}
+----------------------------------------
+status     : ok
+model      : claude-sonnet-4-6
+text       : Hola
+in/out tok : 26 / 6
+latency_s  : 1.455
+cost_usd   : 0.000168
 ```
 
-## Siguiente versión
+The structured trace (tokens, per-call cost, latency, `used_fallback`) is the seed
+of tracing (C-E1) and cost budgeting (C-F1).
 
-Política de fallback por-tarea, async para concurrencia, prompt caching
-instrumentado de verdad (C-A4), y redacción de PII en el trace (C-E6).
+## Next version
+
+Per-task fallback policy, async for concurrency, real prompt-caching
+instrumentation (C-A4), and PII redaction in the trace (C-E6).
