@@ -1,0 +1,10 @@
+# Eval set — extracción structured-output sobre PR/commit (dominio SDLC).
+# golden: {type, scope, breaking_change, issues[]}
+{"id": "feat-auth", "input": "feat(auth): add OAuth2 login flow\n\nImplements the authorization-code grant. Closes PROJ-101.", "golden": {"type": "feat", "scope": "auth", "breaking_change": false, "issues": ["PROJ-101"]}}
+{"id": "fix-noscope", "input": "fix: prevent crash when config file is missing\n\nFixes PROJ-233 and PROJ-234.", "golden": {"type": "fix", "scope": null, "breaking_change": false, "issues": ["PROJ-233", "PROJ-234"]}}
+{"id": "feat-breaking", "input": "feat(api): change pagination params\n\nBREAKING CHANGE: `page` is now zero-indexed. Refs PROJ-55.", "golden": {"type": "feat", "scope": "api", "breaking_change": true, "issues": ["PROJ-55"]}}
+{"id": "refactor-db", "input": "refactor(db): extract query builder into its own module\n\nNo functional change.", "golden": {"type": "refactor", "scope": "db", "breaking_change": false, "issues": []}}
+{"id": "docs-readme", "input": "docs: update README with install instructions", "golden": {"type": "docs", "scope": null, "breaking_change": false, "issues": []}}
+{"id": "feat-scope-synonym", "input": "Add retry logic to the authentication client so transient 5xx errors don't fail the login. Closes PROJ-300.", "golden": {"type": "feat", "scope": "auth", "breaking_change": false, "issues": ["PROJ-300"]}}
+{"id": "chore-deps", "input": "chore(deps): bump anthropic from 0.113 to 0.140", "golden": {"type": "chore", "scope": "deps", "breaking_change": false, "issues": []}}
+{"id": "test-runner", "input": "test(evals): add fixture-based tests for the grader\n\nPart of PROJ-410.", "golden": {"type": "test", "scope": "evals", "breaking_change": false, "issues": ["PROJ-410"]}}
