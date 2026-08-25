@@ -1,8 +1,8 @@
-"""Pieza 2 del harness: el runner.
+"""Piece 2 of the harness: the runner.
 
-  Genera y CONGELA los outputs crudos del SUT (una vez), separando generación
-  de grading. Escribe línea a línea + flush para no perder llamadas ya pagadas
-  si el run se corta. No parsea: el json.loads es del grader.
+  Generates and FREEZES the SUT's raw outputs (once), separating generation
+  from grading. Writes line by line + flush so we don't lose already-paid-for
+  calls if the run is interrupted. It doesn't parse: the json.loads is the grader's job.
   """
 from __future__ import annotations
 
@@ -14,12 +14,12 @@ from llm_client import ProductionLLMClient
 from .dataset import EvalCase
 
 SYSTEM = (
-      "Extrae metadata de un mensaje de PR/commit y responde SOLO con un objeto JSON "
-      "con estos campos:\n"
-      '- "type": uno de ["feat","fix","refactor","docs","chore","test"]\n'
-      '- "scope": el área del código afectada como string, o null si no aplica\n'
-      '- "breaking_change": true o false\n'
-      '- "issues": lista de issue keys (ej. ["PROJ-123"]), o [] si no hay'
+      "Extract metadata from a PR/commit message and respond ONLY with a JSON object "
+      "with these fields:\n"
+      '- "type": one of ["feat","fix","refactor","docs","chore","test"]\n'
+      '- "scope": the affected area of the code as a string, or null if not applicable\n'
+      '- "breaking_change": true or false\n'
+      '- "issues": list of issue keys (e.g. ["PROJ-123"]), or [] if none'
   )
    
 def run(cases: list[EvalCase], 
@@ -32,7 +32,7 @@ def run(cases: list[EvalCase],
     jsonl_path = out / f"{run_id}.jsonl"
     meta_path  = out / f"{run_id}.meta.json"
 
-    with open(jsonl_path, "w", buffering=1, encoding="utf-8") as f:  # Decisión 2: line-buffered
+    with open(jsonl_path, "w", buffering=1, encoding="utf-8") as f:  # Decision 2: line-buffered
         for case in cases:
             result = client.complete(system=SYSTEM,
                                     messages=[{"role": "user", "content": case.input}],
@@ -50,10 +50,9 @@ def run(cases: list[EvalCase],
                 "output_tokens": result.output_tokens
             }
             f.write(json.dumps(record, ensure_ascii=False) + "\n")
-            # ¿hace falta flush aquí, o buffering=1 ya lo cubre?  ← piénsalo
+            # is a flush needed here, or does buffering=1 already cover it?  ← think about it
 
     meta = {
-        # TU CÓDIGO: run_id, date, dataset?, model, fallback_model, max_tokens, n_cases
         "run_id": run_id,
         "date": datetime.now().isoformat(),
         "model": client.model,

@@ -1,8 +1,8 @@
-"""Ejecución real contra la Claude API. Requiere ANTHROPIC_API_KEY en el entorno.
+"""Real run against the Claude API. Requires ANTHROPIC_API_KEY in the environment.
 
     python examples/real_run.py
 
-Copia la salida (el trace de coste/tokens) al README como prueba end-to-end.
+Copy the output (the cost/token trace) into the README as an end-to-end proof.
 """
 import logging
 
@@ -14,8 +14,8 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 def main():
     client = ProductionLLMClient()
     res = client.complete(
-        system="Eres conciso.",
-        messages=[{"role": "user", "content": "Di 'hola' en una sola palabra."}],
+        system="Be concise.",
+        messages=[{"role": "user", "content": "Say 'hello' in a single word."}],
         max_tokens=20,
     )
     print("-" * 40)

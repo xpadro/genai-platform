@@ -1,9 +1,9 @@
-"""Pieza 3 del harness: los graders.
+"""Piece 3 of the harness: the graders.
 
-Leen el response CRUDO congelado, lo parsean, y emiten un veredicto por campo.
-Aquí vive el json.loads: si el crudo no parsea, es un GRADE (parse_error), no un crash.
-Frontera LB2: code-based para lo enumerable (type/breaking_change/issues),
-LLM-judge para lo de vocabulario abierto (scope).
+They read the frozen RAW response, parse it, and emit a verdict per field.
+The json.loads lives here: if the raw doesn't parse, that's a GRADE (parse_error), not a crash.
+LB2 boundary: code-based for the enumerable fields (type/breaking_change/issues),
+LLM-judge for the open-vocabulary one (scope).
 """
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ import json
 
 from llm_client import ProductionLLMClient
 
-# --- Graders code-based (deterministas, 0 llamadas a LLM) ---
+# --- Code-based graders (deterministic, 0 LLM calls) ---
 
 
 def grade_type(predicted: str|None, golden: str) -> bool:
@@ -32,14 +32,14 @@ def grade_issues(predicted: list[str]|None, golden: list[str]) -> bool:
     return set(predicted) == set(golden)
 
 
-# --- Grader LLM-judge (para scope; vocabulario abierto) ---
+# --- LLM-judge grader (for scope; open vocabulary) ---
 
-JUDGE_MODEL = "claude-opus-4-8"  # desacoplado; idealmente distinto/superior al SUT
+JUDGE_MODEL = "claude-opus-4-8"  # decoupled; ideally different from/superior to the SUT
 
 
 def grade_scope(predicted: str|None, golden: str, judge_client: ProductionLLMClient) -> bool:
     # Code short-circuits before paying for the llm judge
-    if predicted == golden:  # null==null y exact-match
+    if predicted == golden:  # null==null and exact-match
         return True
     if predicted is None or golden is None:
         return False  # One is null, the other is not (no equivalence)
@@ -66,11 +66,11 @@ def grade_scope(predicted: str|None, golden: str, judge_client: ProductionLLMCli
     return verdict == "correct"
 
 
-# --- Orquestación: gradar un caso completo ---
+# --- Orchestration: grade a full case ---
 
 
 def grade_case(record: dict, judge_client: ProductionLLMClient) -> dict:
-    # Decisión 1: outcomes distintos, sin reventar.
+    # Decision 1: distinct outcomes, without blowing up.
     if record["status"] != "ok":
         return {
             "case_id": record["case_id"],

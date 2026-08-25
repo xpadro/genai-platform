@@ -1,7 +1,7 @@
-"""Pieza 1 del harness: el dataset.
+"""Piece 1 of the harness: the dataset.
 
-Casos versionados en JSONL (git). Cada caso = input + golden esperado.
-El dataset es dato, no código: se lee, no se genera al vuelo.
+Cases versioned in JSONL (git). Each case = input + expected golden.
+The dataset is data, not code: it's read, not generated on the fly.
 """
 from __future__ import annotations
 

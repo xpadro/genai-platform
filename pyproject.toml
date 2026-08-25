@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "genai-platform"
 version = "0.2.0"
-description = "Laboratorio de plataforma GenAI: cliente LLM productivo (llm_client) y eval harness (llm_evals)."
+description = "GenAI platform lab: production-ready LLM client (llm_client) and eval harness (llm_evals)."
 requires-python = ">=3.10"
 dependencies = ["anthropic>=0.113", "httpx"]
 

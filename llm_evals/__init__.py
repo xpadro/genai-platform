@@ -1,4 +1,4 @@
-"""llm_evals — eval harness reproducible sobre el sistema bajo prueba (SUT).
+"""llm_evals — reproducible eval harness over the system under test (SUT).
 
-Piezas desacopladas: dataset → runner → grader → report.
+Decoupled pieces: dataset → runner → grader → report.
 """

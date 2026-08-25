@@ -114,20 +114,20 @@ upward. It always returns an `LLMResult` with a `status`:
 
 ## Real run (end-to-end trace)
 
-Output of `python examples/real_run.py` against `api.anthropic.com` (2026-06-30):
+Output of `python examples/real_run.py` against `api.anthropic.com` (2026-08-25):
 
 ```text
 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
-INFO trace {'text': 'Hola', 'model': 'claude-sonnet-4-6', 'status': 'ok',
-            'input_tokens': 26, 'output_tokens': 6, 'cache_read': 0, 'cache_write': 0,
-            'latency_s': 1.455, 'cost_usd': 0.000168, 'used_fallback': False, 'reason': None}
+INFO trace {'text': 'Hello', 'model': 'claude-sonnet-4-6', 'status': 'ok',
+            'input_tokens': 22, 'output_tokens': 4, 'cache_read': 0, 'cache_write': 0,
+            'latency_s': 1.338, 'cost_usd': 0.000126, 'used_fallback': False, 'reason': None}
 ----------------------------------------
 status     : ok
 model      : claude-sonnet-4-6
-text       : Hola
-in/out tok : 26 / 6
-latency_s  : 1.455
-cost_usd   : 0.000168
+text       : Hello
+in/out tok : 22 / 4
+latency_s  : 1.338
+cost_usd   : 0.000126
 ```
 
 The structured trace (tokens, per-call cost, latency, `used_fallback`) is the seed

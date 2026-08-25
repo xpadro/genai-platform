@@ -5,7 +5,7 @@ from _fakes import FakeStream, FakeUsage, make_status_error, patch_stream
 
 
 def test_transient_on_primary_falls_back_to_ok(monkeypatch):
-    """Un error transitorio en el primario debe degradar al fallback y devolver ok."""
+    """A transient error on the primary should degrade to the fallback and return ok."""
     client = ProductionLLMClient(model="primary", fallback_model="fallback")
     seen = []
 
@@ -26,7 +26,7 @@ def test_transient_on_primary_falls_back_to_ok(monkeypatch):
 
 
 def test_primary_ok_marks_used_fallback_false(monkeypatch):
-    """Si el primario responde, used_fallback debe ser False."""
+    """If the primary responds, used_fallback should be False."""
     client = ProductionLLMClient(model="primary", fallback_model="fallback")
 
     def handler(model):

@@ -1,4 +1,4 @@
-# Eval set — extracción structured-output sobre PR/commit (dominio SDLC).
+# Eval set — structured-output extraction over PR/commit (SDLC domain).
 # golden: {type, scope, breaking_change, issues[]}
 {"id": "feat-auth", "input": "feat(auth): add OAuth2 login flow\n\nImplements the authorization-code grant. Closes PROJ-101.", "golden": {"type": "feat", "scope": "auth", "breaking_change": false, "issues": ["PROJ-101"]}}
 {"id": "fix-noscope", "input": "fix: prevent crash when config file is missing\n\nFixes PROJ-233 and PROJ-234.", "golden": {"type": "fix", "scope": null, "breaking_change": false, "issues": ["PROJ-233", "PROJ-234"]}}

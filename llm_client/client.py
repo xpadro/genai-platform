@@ -12,10 +12,10 @@ log = logging.getLogger("llm_client")
 
 
 class ProductionLLMClient:
-    """Cliente LLM con streaming, retries, fallback y observabilidad de coste.
+    """LLM client with streaming, retries, fallback and cost observability.
 
-    Contrato: `complete()` nunca lanza una excepción de red/SDK hacia arriba.
-    Siempre devuelve un `LLMResult` con `status` ok / error / unavailable.
+    Contract: `complete()` never propagates a network/SDK exception upward.
+    It always returns an `LLMResult` with a `status` of ok / error / unavailable.
     """
 
     def __init__(
@@ -25,7 +25,7 @@ class ProductionLLMClient:
         max_retries: int = 3,
         timeout: float = 30.0,
     ):
-        # El SDK gestiona el backoff exponencial de los retries internamente.
+        # The SDK handles the exponential backoff of retries internally.
         self._c = anthropic.Anthropic(max_retries=max_retries, timeout=timeout)
         self.model = model
         self.fallback_model = fallback_model
@@ -34,18 +34,18 @@ class ProductionLLMClient:
         try:
             return self._call(self.model, system, messages, max_tokens)
         except PERMANENT as e:
-            # Reintentar no ayuda: la request es inválida. Fallar claro.
+            # Retrying won't help: the request is invalid. Fail clearly.
             log.error("permanent error (no retry): %s", e)
             return LLMResult.error(reason=f"{type(e).__name__}: {e}")
         except TRANSIENT as e:
-            # El SDK ya reintentó y agotó sus retries -> probamos el fallback.
+            # The SDK already retried and exhausted its retries -> we try the fallback.
             log.warning("primary failed after retries: %s -> fallback", e)
             try:
                 return self._call(
                     self.fallback_model, system, messages, max_tokens, used_fallback=True
                 )
             except Exception as e2:
-                # Fallback también cayó -> degradación elegante, no excepción cruda.
+                # Fallback failed too -> graceful degradation, not a raw exception.
                 log.error("fallback failed: %s -> graceful degradation", e2)
                 return LLMResult.unavailable(reason=f"{type(e2).__name__}: {e2}")
 
@@ -72,5 +72,5 @@ class ProductionLLMClient:
             used_fallback=used_fallback,
         )
         result.cost_usd = cost_usd(result)
-        log.info("trace %s", dataclasses.asdict(result))  # semilla C-E1 (tracing)
+        log.info("trace %s", dataclasses.asdict(result))  # seed for C-E1 (tracing)
         return result

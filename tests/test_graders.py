@@ -1,7 +1,7 @@
-"""Tests de la Pieza 3 (graders) con judge mockeado — sin gastar API.
+"""Tests for Piece 3 (graders) with a mocked judge — no API spend.
 
-Cubren los tres outcomes de grade_case (graded / parse_error / sut_error)
-y la frontera LB2: scope semántico ("auth" ≈ "authentication") vía judge.
+They cover the three outcomes of grade_case (graded / parse_error / sut_error)
+and the LB2 boundary: semantic scope ("auth" ≈ "authentication") via the judge.
 """
 
 import json
@@ -14,14 +14,14 @@ from llm_evals.graders import (
     grade_type,
 )
 
-# --- Doble de prueba: un judge falso que no toca la red ---
+# --- Test double: a fake judge that doesn't touch the network ---
 
 
 class FakeJudge:
-    """Imita ProductionLLMClient para grade_scope.
+    """Mimics ProductionLLMClient for grade_scope.
 
-    grade_scope solo llama a .complete() y lee .status y .text del resultado.
-    Le decimos de antemano qué veredicto debe devolver.
+    grade_scope only calls .complete() and reads .status and .text from the result.
+    We tell it up front which verdict it should return.
     """
 
     def __init__(self, verdict: str = "correct", status: str = "ok"):
@@ -29,18 +29,18 @@ class FakeJudge:
         self._status = status
 
     def complete(self, system, messages, max_tokens=1024) -> LLMResult:
-        text = f"El razonamiento va aquí.\nVERDICT: {self._verdict}"
+        text = f"The reasoning goes here.\nVERDICT: {self._verdict}"
         return LLMResult(text=text, model="fake-judge", status=self._status)
 
 
-# --- Helper: construye un registro como el que escribe el runner ---
+# --- Helper: builds a record like the one the runner writes ---
 
 
 def make_record(response: str, golden: dict, status: str = "ok") -> dict:
-    """Un registro del <run_id>.jsonl. `response` es el texto CRUDO del SUT."""
+    """A record from <run_id>.jsonl. `response` is the SUT's RAW text."""
     return {
         "case_id": "test-case",
-        "input": "irrelevante para el grader",
+        "input": "irrelevant to the grader",
         "golden": golden,
         "response": response,
         "status": status,
@@ -60,26 +60,25 @@ GOLDEN = {
 }
 
 
-# --- Tests de los graders code-based (puros, sin judge) ---
+# --- Tests for the code-based graders (pure, no judge) ---
 
 
-def test_grade_issues_ignora_el_orden():
-    # Decisión 3: comparar como conjuntos, no como listas.
-    # TU CÓDIGO: assert que ["A","B"] y ["B","A"] son iguales para grade_issues
+def test_grade_issues_ignores_order():
+    # Decision 3: compare as sets, not as lists.
     assert grade_issues(["A", "B"], ["B", "A"]) is True
 
 
 
-def test_grade_type_none_es_false():
-    # Campo ausente (None) no debe reventar → False.
+def test_grade_type_none_is_false():
+    # A missing field (None) must not blow up → False.
     assert grade_type(None, "feat") is False
 
 
-# --- Tests de grade_case: los tres outcomes ---
+# --- grade_case tests: the three outcomes ---
 
 
-def test_grade_case_todo_correcto():
-    response = json.dumps(GOLDEN)  # el SUT acertó todo, JSON válido
+def test_grade_case_all_correct():
+    response = json.dumps(GOLDEN)  # the SUT got everything right, valid JSON
     record = make_record(response, GOLDEN)
     result = grade_case(record, FakeJudge(verdict="correct"))
 
@@ -90,24 +89,24 @@ def test_grade_case_todo_correcto():
     assert result["fields"]["issues"] is True
 
 
-def test_grade_case_json_malformado():
-    response = "esto no es json {"  # el SUT devolvió basura
+def test_grade_case_malformed_json():
+    response = "this is not json {"  # the SUT returned garbage
     record = make_record(response, GOLDEN)
     result = grade_case(record, FakeJudge())
 
     assert result["outcome"] == "parse_error"
 
 
-def test_grade_case_sut_caido():
+def test_grade_case_sut_down():
     record = make_record(response="", golden=GOLDEN, status="unavailable")
     result = grade_case(record, FakeJudge())
 
     assert result["outcome"] == "sut_error"
 
 
-def test_grade_case_scope_sinonimo_demuestra_LB2():
-    # El SUT extrae "authentication"; el golden dice "auth".
-    # Exact-match (code) FALLARÍA; el judge (mockeado a correct) lo aprueba.
+def test_grade_case_scope_synonym_demonstrates_LB2():
+    # The SUT extracts "authentication"; the golden says "auth".
+    # Exact-match (code) WOULD FAIL; the judge (mocked to correct) approves it.
     pred = {
         "type": "feat",
         "scope": "authentication",
@@ -120,15 +119,15 @@ def test_grade_case_scope_sinonimo_demuestra_LB2():
     assert result["fields"]["scope"] is True
     assert result["fields"]["type"] is True
 
-def test_grade_case_scope_judge_rechaza():
-    # golden "auth", pred "billing": el judge (mockeado) dice incorrect → scope False
+def test_grade_case_scope_judge_rejects():
+    # golden "auth", pred "billing": the judge (mocked) says incorrect → scope False
     pred = {"type": "feat", "scope": "billing", "breaking_change": False, "issues": ["PROJ-101"]}
     record = make_record(json.dumps(pred), GOLDEN)
     result = grade_case(record, FakeJudge(verdict="incorrect"))
 
     assert result["fields"]["scope"] is False
 
-def test_grade_scope_judge_caido_revienta():
+def test_grade_scope_judge_down_raises():
     pred = {"type": "feat", "scope": "authentication", "breaking_change": False, "issues": ["PROJ-101"]}
     record = make_record(json.dumps(pred), GOLDEN)
     with pytest.raises(RuntimeError):

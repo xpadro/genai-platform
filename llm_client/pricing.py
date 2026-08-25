@@ -1,14 +1,14 @@
-"""Precios de la Claude API (first-party), en USD por millón de tokens (MTok).
+"""Claude API (first-party) prices, in USD per million tokens (MTok).
 
-Fuente: https://platform.claude.com/docs/en/about-claude/pricing
-Verificado: 2026-06-30. Los precios cambian — revisa la fuente antes de confiar
-en estos números para decisiones de coste reales.
+Source: https://platform.claude.com/docs/en/about-claude/pricing
+Verified: 2026-06-30. Prices change — check the source before relying on these
+numbers for real cost decisions.
 """
 from __future__ import annotations
 
 PRICING_DATE = "2026-06-30"
 
-# USD por millón de tokens, por tipo de token.
+# USD per million tokens, by token type.
 PRICES = {
     "claude-sonnet-4-6": {"input": 3.0, "output": 15.0, "cache_write_5m": 3.75, "cache_read": 0.30},
     "claude-haiku-4-5-20251001": {"input": 1.0, "output": 5.0, "cache_write_5m": 1.25, "cache_read": 0.10},
@@ -19,11 +19,11 @@ _MTOK = 1_000_000
 
 
 def cost_usd(result) -> float:
-    """Coste de una llamada a partir de su `usage`.
+    """Cost of a call from its `usage`.
 
-    En la API, `input_tokens` excluye los tokens de cache (write/read se reportan
-    aparte), así que sumar las cuatro categorías no produce doble conteo.
-    Modelo desconocido -> 0.0 (no inventamos precios).
+    In the API, `input_tokens` excludes cache tokens (write/read are reported
+    separately), so summing the four categories does not double-count.
+    Unknown model -> 0.0 (we don't invent prices).
     """
     p = PRICES.get(result.model)
     if p is None:

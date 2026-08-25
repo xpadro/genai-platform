@@ -1,4 +1,4 @@
-"""Dobles de prueba para no gastar API en CI."""
+"""Test doubles so we don't spend API in CI."""
 import anthropic
 import httpx
 
@@ -17,7 +17,7 @@ class _FakeFinal:
 
 
 class FakeStream:
-    """Imita el context manager de messages.stream()."""
+    """Mimics the context manager of messages.stream()."""
 
     def __init__(self, chunks, usage):
         self._chunks = chunks
@@ -49,7 +49,7 @@ def make_connection_error():
 
 
 def patch_stream(monkeypatch, client, handler):
-    """Sustituye client._c.messages.stream por un handler(model) -> FakeStream | raise."""
+    """Replaces client._c.messages.stream with a handler(model) -> FakeStream | raise."""
 
     def fake_stream(*, model, system, messages, max_tokens):
         return handler(model)

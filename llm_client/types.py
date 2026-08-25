@@ -8,10 +8,10 @@ Status = Literal["ok", "unavailable", "error"]
 
 @dataclass
 class LLMResult:
-    """Resultado estructurado de una llamada al modelo.
+    """Structured result of a call to the model.
 
-    Nunca propagamos una excepción cruda al workflow: todo fallo se materializa
-    aquí como `status` + `reason`, para que aguas abajo se pueda decidir qué hacer.
+    We never propagate a raw exception to the workflow: every failure materializes
+    here as `status` + `reason`, so downstream can decide what to do.
     """
 
     text: str
@@ -28,10 +28,10 @@ class LLMResult:
 
     @classmethod
     def unavailable(cls, reason: str) -> "LLMResult":
-        """Retries (primario + fallback) agotados: servicio no disponible."""
+        """Retries (primary + fallback) exhausted: service unavailable."""
         return cls(text="", model="", status="unavailable", reason=reason)
 
     @classmethod
     def error(cls, reason: str) -> "LLMResult":
-        """Error permanente (no reintentable): la request hay que corregirla."""
+        """Permanent error (non-retryable): the request must be fixed."""
         return cls(text="", model="", status="error", reason=reason)

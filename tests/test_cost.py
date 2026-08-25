@@ -21,5 +21,5 @@ def test_cache_read_is_tenth_of_base_input():
 
 
 def test_unknown_model_costs_zero():
-    r = LLMResult(text="", model="modelo-inexistente", status="ok", input_tokens=1_000_000)
+    r = LLMResult(text="", model="nonexistent-model", status="ok", input_tokens=1_000_000)
     assert cost_usd(r) == 0.0
