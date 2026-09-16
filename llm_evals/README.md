@@ -79,3 +79,18 @@ you analyze doesn't disappear when you re-generate.
 | `graders.py` | code-based (`type`/`breaking_change`/`issues`) + llm-judge (`scope`) | ✅ |
 | `report.py` | aggregates metrics + per-case table, to disk | ⬜ |
 | `__main__.py` | CLI: `python -m llm_evals run --set data/eval_set.jsonl` | ⬜ |
+
+## Running
+
+**Run from the repo root (`genai-platform/`).** That's where the package and `data/` live; running
+repo tooling from the repo root is the convention (like `pytest` or `make`).
+
+```bash
+python -m llm_evals run --set data/eval_set.jsonl          # real API (needs a key)
+python -m llm_evals run --set data/eval_set.jsonl --fake   # offline smoke, no API spend
+```
+
+Paths are **relative to the current working directory**: `--set` (a path you pass, like any CLI
+arg) and the default output dirs `data/generations/` and `data/reports/`. Running from the repo
+root keeps them all consistent. (The package itself is an editable install, so it imports from any
+CWD — only these paths depend on where you run from.)
