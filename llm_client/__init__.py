@@ -1,4 +1,4 @@
 from .client import ProductionLLMClient
-from .types import LLMResult
+from .types import LLMClient, LLMResult
 
-__all__ = ["ProductionLLMClient", "LLMResult"]
+__all__ = ["ProductionLLMClient", "LLMClient", "LLMResult"]

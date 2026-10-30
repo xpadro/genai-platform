@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import argparse
 
+from llm_client import LLMClient
+
 from .dataset import load_cases
 from .graders import JUDGE_MODEL, grade_case
 from .report import build_report, print_report, write_report
@@ -29,7 +31,7 @@ def _load_dotenv() -> None:
     load_dotenv()  # never overrides variables already set in the environment
 
 
-def _clients(fake: bool):
+def _clients(fake: bool) -> tuple[LLMClient, LLMClient]:
     """Return (sut_client, judge_client).
 
     Fake doubles offline; decoupled real clients otherwise (the judge is a
@@ -67,7 +69,7 @@ def run_eval(set_path: str, fake: bool = False) -> None:
 
     # 4. GRADERS — score each record (code-based + judge); a bad SUT is a GRADE,
     #    not a crash (parse_error / sut_error).
-    grades = [grade_case(r, judge) for r in records]
+    grades = [grade_case(rec, judge) for rec in records]
 
     # 5. REPORT — aggregate, persist (diffable), and print the headline.
     report = build_report(grades)

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 
-from llm_client import ProductionLLMClient
+from llm_client import LLMClient
 
 # --- Code-based graders (deterministic, 0 LLM calls) ---
 
@@ -37,7 +37,7 @@ def grade_issues(predicted: list[str]|None, golden: list[str]) -> bool:
 JUDGE_MODEL = "claude-opus-4-8"  # decoupled; ideally different from/superior to the SUT
 
 
-def grade_scope(predicted: str|None, golden: str, judge_client: ProductionLLMClient) -> bool:
+def grade_scope(predicted: str|None, golden: str, judge_client: LLMClient) -> bool:
     # Code short-circuits before paying for the llm judge
     if predicted == golden:  # null==null and exact-match
         return True
@@ -69,7 +69,7 @@ def grade_scope(predicted: str|None, golden: str, judge_client: ProductionLLMCli
 # --- Orchestration: grade a full case ---
 
 
-def grade_case(record: dict, judge_client: ProductionLLMClient) -> dict:
+def grade_case(record: dict, judge_client: LLMClient) -> dict:
     # Decision 1: distinct outcomes, without blowing up.
     if record["status"] != "ok":
         return {

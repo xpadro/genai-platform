@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, Protocol
 
 Status = Literal["ok", "unavailable", "error"]
 
@@ -35,3 +35,18 @@ class LLMResult:
     def error(cls, reason: str) -> "LLMResult":
         """Permanent error (non-retryable): the request must be fixed."""
         return cls(text="", model="", status="error", reason=reason)
+
+
+class LLMClient(Protocol):
+    """What callers depend on: anything with this shape is a client.
+
+    Structural (duck) typing checked by the type checker: ProductionLLMClient
+    and the offline/test fakes satisfy it without inheriting from anything.
+    """
+
+    model: str
+    fallback_model: str
+
+    def complete(
+        self, system: str, messages: list[dict], max_tokens: int = 1024
+    ) -> LLMResult: ...

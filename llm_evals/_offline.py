@@ -3,7 +3,8 @@
 Used ONLY by `python -m llm_evals run --fake`. They mimic the surface the
 runner and the judge grader actually touch (`.complete()`, `.model`,
 `.fallback_model`), so the pipeline runs end-to-end, offline and
-deterministically. Real runs use llm_client.ProductionLLMClient instead.
+deterministically. Both satisfy llm_client.LLMClient (structurally, no
+inheritance); real runs use llm_client.ProductionLLMClient instead.
 
 These are NOT the SUT and NOT a real judge: they exist to exercise the WIRING,
 not to measure a model. The numbers a fake run reports are meaningless by design.

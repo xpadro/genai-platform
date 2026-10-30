@@ -11,7 +11,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from llm_client import ProductionLLMClient
+from llm_client import LLMClient
 
 from .dataset import EvalCase
 
@@ -27,7 +27,7 @@ SYSTEM = (
 
 def run(
     cases: list[EvalCase],
-    client: ProductionLLMClient,
+    client: LLMClient,
     out_dir: str | Path = "data/generations",
     max_tokens: int = 1024,
 ) -> str:

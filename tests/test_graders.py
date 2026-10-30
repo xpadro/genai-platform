@@ -18,11 +18,14 @@ from llm_evals.graders import (
 
 
 class FakeJudge:
-    """Mimics ProductionLLMClient for grade_scope.
+    """Satisfies llm_client.LLMClient for grade_scope.
 
     grade_scope only calls .complete() and reads .status and .text from the result.
     We tell it up front which verdict it should return.
     """
+
+    model = "fake-judge"
+    fallback_model = "fake-judge-fallback"
 
     def __init__(self, verdict: str = "correct", status: str = "ok"):
         self._verdict = verdict
