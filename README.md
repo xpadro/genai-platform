@@ -30,7 +30,8 @@ brick of a future *model gateway*.
 
 ```bash
 python3 -m venv .venv
-source .venv/bin/activate          # macOS/Linux  (Windows: .venv\Scripts\activate)
+source .venv/bin/activate          # macOS/Linux
+# Windows: .venv\Scripts\activate (cmd)  ·  source .venv/Scripts/activate (Git Bash)
 pip install -e ".[dev]"
 ```
 
@@ -46,17 +47,17 @@ python -m pytest -q                # 7 tests, SDK is mocked — no API calls, no
 
 ### 3. Real run (hits the API, costs a few cents)
 
-Provide your key, either as an environment variable:
+You need an API key from the [Claude Console](https://console.anthropic.com) (API usage is
+billed separately; a Claude Pro/Max subscription does not include it). Put it in a `.env`
+file at the repo root (already gitignored):
 
 ```bash
-export ANTHROPIC_API_KEY="sk-ant-..."
+ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-…or in a `.env` file (already gitignored) that you load before running:
-
-```bash
-set -a && source .env && set +a
-```
+`examples/real_run.py` and `python -m llm_evals run` load it automatically via
+`python-dotenv` (installed with the `dev` extra). A variable already exported in your shell
+takes precedence over the `.env` value.
 
 Then run the example. **If your shell sets `ANTHROPIC_BASE_URL`** (e.g. a corporate
 proxy that intercepts the Anthropic SDK), override it to reach the public API

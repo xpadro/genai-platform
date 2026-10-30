@@ -1,4 +1,5 @@
-"""Real run against the Claude API. Requires ANTHROPIC_API_KEY in the environment.
+"""Real run against the Claude API. Requires ANTHROPIC_API_KEY in the environment
+or in a .env file at the repo root (loaded automatically).
 
     python examples/real_run.py
 
@@ -6,12 +7,15 @@ Copy the output (the cost/token trace) into the README as an end-to-end proof.
 """
 import logging
 
+from dotenv import load_dotenv
+
 from llm_client import ProductionLLMClient
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
 
 def main():
+    load_dotenv()  # never overrides variables already set in the environment
     client = ProductionLLMClient()
     res = client.complete(
         system="Be concise.",

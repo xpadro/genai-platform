@@ -20,6 +20,15 @@ from .report import build_report, print_report, write_report
 from .runner import load_generations, run
 
 
+def _load_dotenv() -> None:
+    """Load .env if python-dotenv is installed (dev extra); it's optional for the package."""
+    try:
+        from dotenv import load_dotenv
+    except ImportError:
+        return
+    load_dotenv()  # never overrides variables already set in the environment
+
+
 def _clients(fake: bool):
     """Return (sut_client, judge_client).
 
@@ -31,6 +40,7 @@ def _clients(fake: bool):
 
         return FakeSUT(), FakeJudge()
 
+    _load_dotenv()
     from llm_client import ProductionLLMClient
 
     sut = ProductionLLMClient()  # default model = the SUT under evaluation
