@@ -88,9 +88,11 @@ repo tooling from the repo root is the convention (like `pytest` or `make`).
 ```bash
 python -m llm_evals run --set data/eval_set.jsonl          # real API (needs a key)
 python -m llm_evals run --set data/eval_set.jsonl --fake   # offline smoke, no API spend
+python -m llm_evals run --set data/eval_set.jsonl --out /tmp/evals  # custom output base dir
 ```
 
-Paths are **relative to the current working directory**: `--set` (a path you pass, like any CLI
-arg) and the default output dirs `data/generations/` and `data/reports/`. Running from the repo
-root keeps them all consistent. (The package itself is an editable install, so it imports from any
+All outputs go under one **base dir**, `--out` (default `data`): frozen generations in
+`<out>/generations/` and reports in `<out>/reports/`. Re-grading an old run only needs that base
+dir plus its `run_id`. Relative paths (`--set`, and `--out` incl. its default) resolve against the
+**current working directory**; running from the repo root keeps them all consistent. (The package itself is an editable install, so it imports from any
 CWD — only these paths depend on where you run from.)

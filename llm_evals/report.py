@@ -5,6 +5,7 @@ across runs). Honest denominator: field accuracy is computed ONLY over graded
 cases; ungraded cases (parse_error / sut_error) are reported separately as
 counts — never hidden, never mixed into the field metric.
 """
+
 from __future__ import annotations
 
 import json
@@ -49,9 +50,9 @@ def build_report(grades: list[dict]) -> dict:
     }
 
 
-def write_report(report: dict, run_id: str, out_dir: str | Path = "data/reports") -> Path:
+def write_report(report: dict, run_id: str, out_dir: str | Path = "data") -> Path:
     """Write the report to disk as JSON (machine-readable, diffable)."""
-    out = Path(out_dir)
+    out = Path(out_dir) / "reports"
     out.mkdir(parents=True, exist_ok=True)
     path = out / f"{run_id}.json"
     path.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")

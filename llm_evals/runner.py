@@ -28,12 +28,12 @@ SYSTEM = (
 def run(
     cases: list[EvalCase],
     client: LLMClient,
-    out_dir: str | Path = "data/generations",
+    out_dir: str | Path = "data",
     max_tokens: int = 1024,
 ) -> str:
 
     run_id = datetime.now().strftime("%Y-%m-%dT%H-%M-%S-%f")
-    out = Path(out_dir)
+    out = Path(out_dir) / "generations"
     out.mkdir(parents=True, exist_ok=True)
     jsonl_path = out / f"{run_id}.jsonl"
     meta_path = out / f"{run_id}.meta.json"
@@ -75,7 +75,7 @@ def run(
     return run_id
 
 
-def load_generations(run_id: str, gen_dir: str | Path = "data/generations") -> list[dict]:
+def load_generations(run_id: str, out_dir: str | Path = "data") -> list[dict]:
     """Reload a frozen run from disk into records — the inverse of `run`.
 
     This is the seam between generation and grading, and it goes through DISK on
@@ -83,7 +83,7 @@ def load_generations(run_id: str, gen_dir: str | Path = "data/generations") -> l
     (iterate the rubric) without re-generating (0 API calls). It's the mirror of
     dataset.load_cases: one line == one record, exactly as `run` wrote it.
     """
-    jsonl_path = Path(gen_dir) / f"{run_id}.jsonl"
+    jsonl_path = Path(out_dir) / "generations" / f"{run_id}.jsonl"
     records = []
 
     with open(jsonl_path, "r", encoding="utf-8") as f:

@@ -2,17 +2,22 @@
 
     python -m llm_evals run --set data/eval_set.jsonl          # real API
     python -m llm_evals run --set data/eval_set.jsonl --fake   # offline smoke
+    python -m llm_evals run --set data/eval_set.jsonl --out /tmp/evals  # custom output dir
 
 This is the ONLY place the four pieces are wired together. Read run_eval() top
 to bottom to see the whole pipeline:
 
     DATASET -> RUNNER -> [reload] -> GRADERS -> REPORT
 
-Run it from the repo root (paths like data/generations are relative).
+Outputs go under a single base dir (`--out`, default `data`): frozen generations
+in <out>/generations/ and reports in <out>/reports/. Relative paths resolve
+against the current working directory, so run it from the repo root.
 """
+
 from __future__ import annotations
 
 import argparse
+from pathlib import Path
 
 from llm_client import LLMClient
 
@@ -50,21 +55,23 @@ def _clients(fake: bool) -> tuple[LLMClient, LLMClient]:
     return sut, judge
 
 
-def run_eval(set_path: str, fake: bool = False) -> None:
+def run_eval(cases_path: str, out_path: Path, fake: bool = False) -> dict:
     # 1. DATASET — versioned cases (input + golden), read from disk.
-    cases = load_cases(set_path)
-    print(f"loaded {len(cases)} cases from {set_path}")
+    cases = load_cases(cases_path)
+    print(f"loaded {len(cases)} cases from {cases_path}")
 
     sut, judge = _clients(fake)
 
     # 2. RUNNER — generate once and FREEZE the raw outputs to disk; return run_id.
-    run_id = run(cases, sut)
-    print(f"run_id = {run_id}  (frozen to data/generations/{run_id}.jsonl)")
+    run_id = run(cases, sut, out_path)
+    print(
+        f"run_id = {run_id}  (frozen to {out_path / 'generations' / f'{run_id}.jsonl'})"
+    )
 
     # 3. RELOAD — read the frozen run back into records. The runner->grader seam
     #    goes through DISK, which is what lets you re-grade without re-generating.
     #    (load_generations is YOUR CODE in runner.py.)
-    records = load_generations(run_id)
+    records = load_generations(run_id, out_path)
     assert len(records) == len(cases), "N->N invariant broken on reload"
 
     # 4. GRADERS — score each record (code-based + judge); a bad SUT is a GRADE,
@@ -73,9 +80,11 @@ def run_eval(set_path: str, fake: bool = False) -> None:
 
     # 5. REPORT — aggregate, persist (diffable), and print the headline.
     report = build_report(grades)
-    path = write_report(report, run_id)
+    path = write_report(report, run_id, out_path)
     print_report(report)
     print(f"report written to {path}")
+
+    return report
 
 
 def main() -> None:
@@ -90,9 +99,18 @@ def main() -> None:
         "--fake", action="store_true", help="offline smoke test (no API spend)"
     )
 
+    p_run.add_argument(
+        "--out",
+        dest="out_path",
+        required=False,
+        default=Path("data"),
+        help="output directory",
+        type=Path,
+    )
+
     args = parser.parse_args()
     if args.command == "run":
-        run_eval(args.set_path, fake=args.fake)
+        run_eval(args.set_path, args.out_path, fake=args.fake)
 
 
 if __name__ == "__main__":
