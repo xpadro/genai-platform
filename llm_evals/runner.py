@@ -30,6 +30,7 @@ def run(
     client: LLMClient,
     out_dir: str | Path = "data",
     max_tokens: int = 1024,
+    dataset: str | None = None,
 ) -> str:
 
     run_id = datetime.now().strftime("%Y-%m-%dT%H-%M-%S-%f")
@@ -53,6 +54,7 @@ def run(
                 "golden": case.golden,
                 "response": result.text,
                 "status": result.status,
+                "stop_reason": result.stop_reason,
                 "model": result.model,
                 "used_fallback": result.used_fallback,
                 "cost_usd": result.cost_usd,
@@ -64,6 +66,7 @@ def run(
     meta = {
         "run_id": run_id,
         "date": datetime.now().isoformat(),
+        "dataset": dataset,  # which eval set produced this run (traceability)
         "model": client.model,
         "fallback_model": client.fallback_model,
         "max_tokens": max_tokens,

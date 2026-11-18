@@ -65,7 +65,7 @@ def run_eval(cases_path: str | Path, out_path: str | Path, fake: bool = False) -
     sut, judge = _clients(fake)
 
     # 2. RUNNER — generate once and FREEZE the raw outputs to disk; return run_id.
-    run_id = run(cases, sut, out_path)
+    run_id = run(cases, sut, out_path, dataset=str(cases_path))
     print(
         f"run_id = {run_id}  (frozen to {out_path / 'generations' / f'{run_id}.jsonl'})"
     )

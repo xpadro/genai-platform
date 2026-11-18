@@ -60,7 +60,9 @@ def grade_scope(predicted: str | None, golden: str, judge_client: LLMClient) -> 
     )
 
     if result.status != "ok":
-        raise RuntimeError(f"judge unavailable: {result.reason}")
+        # Broken instrument != data: a judge that is down, truncated or refused
+        # must stop the run, never be counted as an "incorrect" verdict.
+        raise RuntimeError(f"judge failed (status={result.status}): {result.reason}")
 
     last_line = result.text.strip().splitlines()[-1]
     verdict = last_line.split("VERDICT:")[-1].strip().lower()

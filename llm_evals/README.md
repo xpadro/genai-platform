@@ -30,7 +30,7 @@ you analyze doesn't disappear when you re-generate.
    │ OUTPUT of 1 run = FROZEN generations                                          │
    │                                                                               │
    │  <run_id>.jsonl              ← 1 LINE PER CASE (8 cases → 8 lines)            │
-   │    {case_id, input, golden, response(raw), status,                            │
+   │    {case_id, input, golden, response(raw), status, stop_reason,               │
    │     model, used_fallback, cost_usd, tokens}                                   │
    │                                                                               │
    │  <run_id>.meta.json          ← ONCE per run (what's common to the run)        │
@@ -61,9 +61,10 @@ you analyze doesn't disappear when you re-generate.
   Reason: if the model emits malformed JSON, `json.loads` blows up → if the runner parsed, you'd lose the
   raw output and be blind to exactly that failure mode. With the raw output frozen, "invalid JSON" becomes a
   *measurable grade*, not a crash; and if you improve the parser, you re-parse at 0 cost.
-- **`status` distinguishes "bad output" from "no output".** `ok | error | unavailable` (from `LLMResult`).
-  If `status != ok`, `response` comes back empty → the grader treats the case as an availability failure,
-  not as incorrect extraction.
+- **`status` distinguishes "bad output" from "no output".** `ok | truncated | refused | error | unavailable`
+  (from `LLMResult`). Only `ok` is graded; any other status → `sut_error` (with the status), not incorrect
+  extraction. `truncated` keeps the partial raw `response` frozen for inspection. The judge follows the same
+  rule the other way round: a judge reply that isn't `ok` raises (broken instrument ≠ data).
 - **`used_fallback` explains weird outputs.** If the primary went down and the fallback (haiku) responded, a
   "bad" case may be bad because of the degraded model, not the prompt. `model` records the one that *actually*
   responded.
@@ -77,8 +78,8 @@ you analyze doesn't disappear when you re-generate.
 | `dataset.py` | loads `eval_set.jsonl` → `list[EvalCase]` | ✅ |
 | `runner.py` | generates and **freezes** raw outputs (`<run_id>.jsonl` + `.meta.json`) | ✅ |
 | `graders.py` | code-based (`type`/`breaking_change`/`issues`) + llm-judge (`scope`) | ✅ |
-| `report.py` | aggregates metrics + per-case table, to disk | ⬜ |
-| `__main__.py` | CLI: `python -m llm_evals run --set data/eval_set.jsonl` | ⬜ |
+| `report.py` | aggregates metrics + per-case table, to disk | ✅ |
+| `__main__.py` | CLI: `python -m llm_evals run --set data/eval_set.jsonl [--out DIR] [--fake]` | ✅ |
 
 ## Running
 

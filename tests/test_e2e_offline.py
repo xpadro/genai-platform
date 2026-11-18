@@ -98,7 +98,8 @@ def test_offline_pipeline_reports_exact_accuracy_and_freezes_one_line_per_case(t
 
     # ...plus its meta, and exactly one report sharing the same run_id.
     run_id = jsonls[0].stem
-    assert (out_dir / "generations" / f"{run_id}.meta.json").is_file()
+    meta_path = out_dir / "generations" / f"{run_id}.meta.json"
+    assert json.loads(meta_path.read_text(encoding="utf-8"))["dataset"] == str(cases_path)
     report_path = out_dir / "reports" / f"{run_id}.json"
     assert report_path.is_file()
     assert len(list((out_dir / "reports").glob("*.json"))) == 1

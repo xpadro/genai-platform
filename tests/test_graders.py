@@ -135,3 +135,11 @@ def test_grade_scope_judge_down_raises():
     record = make_record(json.dumps(pred), GOLDEN)
     with pytest.raises(RuntimeError):
         grade_case(record, FakeJudge(status="unavailable"))
+
+
+def test_grade_scope_truncated_judge_raises_instead_of_grading_incorrect():
+    """A judge reply cut at max_tokens has no VERDICT line: broken instrument, not data."""
+    pred = {"type": "feat", "scope": "authentication", "breaking_change": False, "issues": ["PROJ-101"]}
+    record = make_record(json.dumps(pred), GOLDEN)
+    with pytest.raises(RuntimeError, match="status=truncated"):
+        grade_case(record, FakeJudge(status="truncated"))
