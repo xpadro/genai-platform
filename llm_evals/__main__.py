@@ -55,7 +55,9 @@ def _clients(fake: bool) -> tuple[LLMClient, LLMClient]:
     return sut, judge
 
 
-def run_eval(cases_path: str, out_path: Path, fake: bool = False) -> dict:
+def run_eval(cases_path: str | Path, out_path: str | Path, fake: bool = False) -> dict:
+    out_path = Path(out_path)
+
     # 1. DATASET — versioned cases (input + golden), read from disk.
     cases = load_cases(cases_path)
     print(f"loaded {len(cases)} cases from {cases_path}")
