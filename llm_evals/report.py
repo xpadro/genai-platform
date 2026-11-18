@@ -62,8 +62,6 @@ def write_report(report: dict, run_id: str, out_dir: str | Path = "data") -> Pat
 def print_report(report: dict) -> None:
     """Human-readable summary to stdout (the headline the engineer/VP reads)."""
     s = report["summary"]
-    # YOUR CODE: print n_total, n_graded, the outcomes breakdown, and each
-    # field's accuracy in a readable way. Show None as "n/a" (no graded cases).
     print(f"Total cases: {s['n_total']}")
     print(f"Graded cases: {s['n_graded']}")
     print("Outcomes breakdown:")

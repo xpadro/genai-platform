@@ -1,7 +1,7 @@
 import anthropic
+from _fakes import make_connection_error, make_status_error, patch_stream
 
 from llm_client import ProductionLLMClient
-from _fakes import make_connection_error, make_status_error, patch_stream
 
 
 def test_both_fail_returns_unavailable_not_exception(monkeypatch):
