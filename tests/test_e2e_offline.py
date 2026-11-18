@@ -70,7 +70,7 @@ EXPECTED_FIELD_ACCURACY = {
 }
 
 
-def test_e2e_offline(tmp_path):
+def test_offline_pipeline_reports_exact_accuracy_and_freezes_one_line_per_case(tmp_path):
     # ARRANGE — the dataset also goes through disk, like a real run.
     cases_path = tmp_path / "cases.jsonl"
     cases_path.write_text(
