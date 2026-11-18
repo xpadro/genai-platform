@@ -7,7 +7,8 @@ GenAI platform lab (a learning portfolio). Monorepo with one module per topic.
 - **`llm_client`** — production-ready LLM client layer on top of the Anthropic SDK
   (streaming, retries, fallback, timeouts, cost/token observability). Documented below.
 - **`llm_evals`** — reproducible eval harness (`dataset → runner → grader → report`).
-  **WIP**: dataset + SDLC eval set in place; runner, graders and report pending.
+  Runs end-to-end against the real API; baseline and what it taught in
+  [`llm_evals/README.md`](llm_evals/README.md#baseline-real-runs-2026-11-18).
 
 ---
 

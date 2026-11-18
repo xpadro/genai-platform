@@ -1,0 +1,49 @@
+{
+  "summary": {
+    "n_total": 8,
+    "n_graded": 0,
+    "outcomes": {
+      "parse_error": 8
+    },
+    "field_accuracy": {
+      "type": null,
+      "scope": null,
+      "breaking_change": null,
+      "issues": null
+    }
+  },
+  "cases": [
+    {
+      "case_id": "feat-auth",
+      "outcome": "parse_error"
+    },
+    {
+      "case_id": "fix-noscope",
+      "outcome": "parse_error"
+    },
+    {
+      "case_id": "feat-breaking",
+      "outcome": "parse_error"
+    },
+    {
+      "case_id": "refactor-db",
+      "outcome": "parse_error"
+    },
+    {
+      "case_id": "docs-readme",
+      "outcome": "parse_error"
+    },
+    {
+      "case_id": "feat-scope-synonym",
+      "outcome": "parse_error"
+    },
+    {
+      "case_id": "chore-deps",
+      "outcome": "parse_error"
+    },
+    {
+      "case_id": "test-runner",
+      "outcome": "parse_error"
+    }
+  ]
+}

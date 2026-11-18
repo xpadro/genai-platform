@@ -1,0 +1,97 @@
+{
+  "summary": {
+    "n_total": 8,
+    "n_graded": 8,
+    "outcomes": {
+      "graded": 8
+    },
+    "field_accuracy": {
+      "type": 0.875,
+      "scope": 0.875,
+      "breaking_change": 1.0,
+      "issues": 1.0
+    }
+  },
+  "cases": [
+    {
+      "case_id": "feat-auth",
+      "outcome": "graded",
+      "fields": {
+        "type": true,
+        "breaking_change": true,
+        "issues": true,
+        "scope": true
+      }
+    },
+    {
+      "case_id": "fix-noscope",
+      "outcome": "graded",
+      "fields": {
+        "type": true,
+        "breaking_change": true,
+        "issues": true,
+        "scope": true
+      }
+    },
+    {
+      "case_id": "feat-breaking",
+      "outcome": "graded",
+      "fields": {
+        "type": true,
+        "breaking_change": true,
+        "issues": true,
+        "scope": true
+      }
+    },
+    {
+      "case_id": "refactor-db",
+      "outcome": "graded",
+      "fields": {
+        "type": true,
+        "breaking_change": true,
+        "issues": true,
+        "scope": true
+      }
+    },
+    {
+      "case_id": "docs-readme",
+      "outcome": "graded",
+      "fields": {
+        "type": true,
+        "breaking_change": true,
+        "issues": true,
+        "scope": false
+      }
+    },
+    {
+      "case_id": "feat-scope-synonym",
+      "outcome": "graded",
+      "fields": {
+        "type": false,
+        "breaking_change": true,
+        "issues": true,
+        "scope": true
+      }
+    },
+    {
+      "case_id": "chore-deps",
+      "outcome": "graded",
+      "fields": {
+        "type": true,
+        "breaking_change": true,
+        "issues": true,
+        "scope": true
+      }
+    },
+    {
+      "case_id": "test-runner",
+      "outcome": "graded",
+      "fields": {
+        "type": true,
+        "breaking_change": true,
+        "issues": true,
+        "scope": true
+      }
+    }
+  ]
+}

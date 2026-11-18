@@ -19,6 +19,7 @@ import json
 import pytest
 
 from llm_evals.__main__ import run_eval
+from llm_evals.runner import dataset_sha256
 
 # FakeSUT returns this SAME extraction for every case:
 #   {"type": "feat", "scope": "auth", "breaking_change": False, "issues": []}
@@ -99,7 +100,11 @@ def test_offline_pipeline_reports_exact_accuracy_and_freezes_one_line_per_case(t
     # ...plus its meta, and exactly one report sharing the same run_id.
     run_id = jsonls[0].stem
     meta_path = out_dir / "generations" / f"{run_id}.meta.json"
-    assert json.loads(meta_path.read_text(encoding="utf-8"))["dataset"] == str(cases_path)
+    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    assert meta["dataset"] == str(cases_path)
+    # The dataset's identity is its CONTENT, not its path: edit the golden in
+    # place and the hash changes, committed or not.
+    assert meta["dataset_sha256"] == dataset_sha256(cases_path)
     report_path = out_dir / "reports" / f"{run_id}.json"
     assert report_path.is_file()
     assert len(list((out_dir / "reports").glob("*.json"))) == 1

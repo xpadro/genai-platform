@@ -1,0 +1,48 @@
+{
+  "run_id": "2026-11-18T22-33-14-388475",
+  "date": "2026-11-18T22:33:23.590393",
+  "dataset": "data/eval_set.jsonl",
+  "model": "claude-sonnet-4-6",
+  "fallback_model": "claude-haiku-4-5-20251001",
+  "max_tokens": 1024,
+  "system": "Extract metadata from a PR/commit message and respond ONLY with a JSON object with these fields:\n- \"type\": one of [\"feat\",\"fix\",\"refactor\",\"docs\",\"chore\",\"test\"]\n- \"scope\": the affected area of the system, decided in this order:\n  1. if the title has an explicit scope, as in \"fix(parser): ...\", use it;\n  2. otherwise infer it from the title or body ONLY if the text names a concrete\n     part of the system (e.g. \"the billing service\" -> \"billing\", \"the CLI parser\" -> \"cli\");\n  3. otherwise null. A scope that only repeats the type (e.g. \"docs\" for a docs\n     change) or names no concrete area is null.\n- \"breaking_change\": true or false\n- \"issues\": list of issue keys (e.g. [\"PROJ-123\"]), or [] if none",
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": "string",
+        "enum": [
+          "feat",
+          "fix",
+          "refactor",
+          "docs",
+          "chore",
+          "test"
+        ]
+      },
+      "scope": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "breaking_change": {
+        "type": "boolean"
+      },
+      "issues": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "type",
+      "scope",
+      "breaking_change",
+      "issues"
+    ],
+    "additionalProperties": false
+  },
+  "n_cases": 8
+}
