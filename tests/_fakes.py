@@ -11,17 +11,26 @@ class FakeUsage:
         self.cache_creation_input_tokens = cache_write
 
 
+class FakeStopDetails:
+    def __init__(self, category=None):
+        self.category = category
+
+
 class _FakeFinal:
-    def __init__(self, usage):
+    def __init__(self, usage, stop_reason="end_turn", stop_details=None):
         self.usage = usage
+        self.stop_reason = stop_reason
+        self.stop_details = stop_details
 
 
 class FakeStream:
     """Mimics the context manager of messages.stream()."""
 
-    def __init__(self, chunks, usage):
+    def __init__(self, chunks, usage, stop_reason="end_turn", stop_details=None):
         self._chunks = chunks
         self._usage = usage
+        self._stop_reason = stop_reason
+        self._stop_details = stop_details
 
     def __enter__(self):
         return self
@@ -34,7 +43,7 @@ class FakeStream:
         return iter(self._chunks)
 
     def get_final_message(self):
-        return _FakeFinal(self._usage)
+        return _FakeFinal(self._usage, self._stop_reason, self._stop_details)
 
 
 def make_status_error(cls, status_code):

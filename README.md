@@ -76,7 +76,9 @@ upward. It always returns an `LLMResult` with a `status`:
 
 | status | meaning |
 |---|---|
-| `ok` | valid response (primary or fallback) |
+| `ok` | **complete** response (primary or fallback); `stop_reason` end_turn / stop_sequence |
+| `truncated` | the model hit `max_tokens`: `text` is a **partial** answer (kept; the caller decides) |
+| `refused` | the model declined (`stop_reason="refusal"`; category in `reason`) |
 | `error` | **permanent** error (400/401/403/404/422): the request must be fixed |
 | `unavailable` | primary retries **and** fallback exhausted: graceful degradation |
 
@@ -86,6 +88,12 @@ upward. It always returns an `LLMResult` with a `status`:
   ones fail fast: retrying them returns the same error and burns latency/money.
 - **Fallback fires only on transient errors**, not permanent ones (another model
   won't fix a malformed prompt).
+- **HTTP 200 is not "ok".** A reply cut at `max_tokens` or a refusal arrives as a
+  successful response; mapping it to `ok` would let callers treat a partial answer
+  as a complete one (in the eval harness, a truncated judge verdict was silently
+  graded "incorrect"). Neither is retried nor sent to the fallback: truncation is
+  fixed by the caller (raise `max_tokens` / tighten the prompt), a refusal is a
+  policy decision. The raw `stop_reason` is kept on every result.
 - **`max_retries` is configurable (default 3).** More retries = more resilience but
   worse tail latency (p99): each retry adds wait + a new call.
 - **Explicit timeout (default 30s).** Short protects p99 but kills legitimately slow

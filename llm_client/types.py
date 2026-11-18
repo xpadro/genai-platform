@@ -3,7 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal, Protocol
 
-Status = Literal["ok", "unavailable", "error"]
+# ok        -> complete answer (stop_reason end_turn / stop_sequence)
+# truncated -> the model hit max_tokens: `text` is a PARTIAL answer
+# refused   -> the model declined (stop_reason "refusal"): `text` may be empty
+# error     -> permanent request error, nothing was generated
+# unavailable -> primary retries and fallback exhausted, nothing was generated
+Status = Literal["ok", "truncated", "refused", "error", "unavailable"]
 
 
 @dataclass
@@ -24,6 +29,7 @@ class LLMResult:
     latency_s: float = 0.0
     cost_usd: float = 0.0
     used_fallback: bool = False
+    stop_reason: str | None = None  # raw API stop_reason, for traceability
     reason: str | None = None
 
     @classmethod

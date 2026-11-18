@@ -6,7 +6,7 @@ import anthropic
 
 from .errors import PERMANENT, TRANSIENT
 from .pricing import cost_usd
-from .types import LLMResult
+from .types import LLMResult, Status
 
 log = logging.getLogger("llm_client")
 
@@ -15,7 +15,10 @@ class ProductionLLMClient:
     """LLM client with streaming, retries, fallback and cost observability.
 
     Contract: `complete()` never propagates a network/SDK exception upward.
-    It always returns an `LLMResult` with a `status` of ok / error / unavailable.
+    It always returns an `LLMResult` whose `status` says what happened:
+    ok / truncated / refused (the model answered, maybe not fully) or
+    error / unavailable (nothing was generated). `status="ok"` only means a
+    COMPLETE answer: a reply cut at max_tokens or a refusal is never "ok".
     """
 
     def __init__(
@@ -59,11 +62,14 @@ class ProductionLLMClient:
                 chunks.append(text)
             final = stream.get_final_message()
 
+        status, reason = _status_from_stop(final, max_tokens)
         u = final.usage
         result = LLMResult(
-            text="".join(chunks),
+            text="".join(chunks),  # kept even when truncated: the caller decides
             model=model,
-            status="ok",
+            status=status,
+            stop_reason=final.stop_reason,
+            reason=reason,
             input_tokens=u.input_tokens,
             output_tokens=u.output_tokens,
             cache_read=getattr(u, "cache_read_input_tokens", 0) or 0,
@@ -74,3 +80,19 @@ class ProductionLLMClient:
         result.cost_usd = cost_usd(result)
         log.info("trace %s", dataclasses.asdict(result))  # seed for C-E1 (tracing)
         return result
+
+
+def _status_from_stop(final, max_tokens: int) -> tuple[Status, str | None]:
+    """Map the API stop_reason to our status, so "ok" never hides a partial answer.
+
+    Neither case is retried or sent to the fallback here: a truncation is fixed
+    by the caller (raise max_tokens or tighten the prompt) and a refusal is a
+    policy decision; both are reported so the caller can act.
+    """
+    if final.stop_reason == "max_tokens":
+        return "truncated", f"stop_reason=max_tokens: output cut at max_tokens={max_tokens}"
+    if final.stop_reason == "refusal":
+        details = final.stop_details
+        category = details.category if details else None
+        return "refused", f"stop_reason=refusal (category={category})"
+    return "ok", None
