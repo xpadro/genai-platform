@@ -31,7 +31,9 @@ class FakeJudge:
         self._verdict = verdict
         self._status = status
 
-    def complete(self, system, messages, max_tokens=1024) -> LLMResult:
+    def complete(
+        self, system, messages, max_tokens=1024, output_schema=None
+    ) -> LLMResult:
         text = f"The reasoning goes here.\nVERDICT: {self._verdict}"
         return LLMResult(text=text, model="fake-judge", status=self._status)
 

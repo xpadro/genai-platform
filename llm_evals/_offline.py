@@ -29,7 +29,9 @@ class FakeSUT:
     model = "fake-sut"
     fallback_model = "fake-sut-fallback"
 
-    def complete(self, system, messages, max_tokens: int = 1024) -> LLMResult:
+    def complete(
+        self, system, messages, max_tokens: int = 1024, output_schema=None
+    ) -> LLMResult:
         canned = json.dumps(
             {"type": "feat", "scope": "auth", "breaking_change": False, "issues": []}
         )
@@ -53,7 +55,9 @@ class FakeJudge:
     model = "fake-judge"
     fallback_model = "fake-judge-fallback"
 
-    def complete(self, system, messages, max_tokens: int = 1024) -> LLMResult:
+    def complete(
+        self, system, messages, max_tokens: int = 1024, output_schema=None
+    ) -> LLMResult:
         return LLMResult(
             text="reasoning goes here.\nVERDICT: correct",
             model=self.model,

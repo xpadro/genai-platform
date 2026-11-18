@@ -54,5 +54,9 @@ class LLMClient(Protocol):
     fallback_model: str
 
     def complete(
-        self, system: str, messages: list[dict], max_tokens: int = 1024
+        self,
+        system: str,
+        messages: list[dict],
+        max_tokens: int = 1024,
+        output_schema: dict | None = None,
     ) -> LLMResult: ...

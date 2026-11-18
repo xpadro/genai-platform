@@ -33,9 +33,20 @@ class ProductionLLMClient:
         self.model = model
         self.fallback_model = fallback_model
 
-    def complete(self, system, messages, max_tokens: int = 1024) -> LLMResult:
+    def complete(
+        self,
+        system,
+        messages,
+        max_tokens: int = 1024,
+        output_schema: dict | None = None,
+    ) -> LLMResult:
+        """`output_schema` (JSON Schema) constrains the reply to valid JSON of that shape.
+
+        It applies to the fallback too: the contract belongs to `complete()`,
+        not to whichever model happens to answer.
+        """
         try:
-            return self._call(self.model, system, messages, max_tokens)
+            return self._call(self.model, system, messages, max_tokens, output_schema)
         except PERMANENT as e:
             # Retrying won't help: the request is invalid. Fail clearly.
             log.error("permanent error (no retry): %s", e)
@@ -45,18 +56,31 @@ class ProductionLLMClient:
             log.warning("primary failed after retries: %s -> fallback", e)
             try:
                 return self._call(
-                    self.fallback_model, system, messages, max_tokens, used_fallback=True
+                    self.fallback_model,
+                    system,
+                    messages,
+                    max_tokens,
+                    output_schema,
+                    used_fallback=True,
                 )
             except Exception as e2:
                 # Fallback failed too -> graceful degradation, not a raw exception.
                 log.error("fallback failed: %s -> graceful degradation", e2)
                 return LLMResult.unavailable(reason=f"{type(e2).__name__}: {e2}")
 
-    def _call(self, model, system, messages, max_tokens, used_fallback=False) -> LLMResult:
+    def _call(
+        self, model, system, messages, max_tokens, output_schema=None, used_fallback=False
+    ) -> LLMResult:
         t0 = time.perf_counter()
         chunks: list[str] = []
+        # output_config is only sent when there is a schema: the API rejects None.
+        extra = {}
+        if output_schema is not None:
+            extra["output_config"] = {
+                "format": {"type": "json_schema", "schema": output_schema}
+            }
         with self._c.messages.stream(
-            model=model, system=system, messages=messages, max_tokens=max_tokens
+            model=model, system=system, messages=messages, max_tokens=max_tokens, **extra
         ) as stream:
             for text in stream.text_stream:
                 chunks.append(text)
