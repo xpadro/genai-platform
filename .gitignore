@@ -9,3 +9,6 @@ __pycache__/
 # Generated run artifacts (eval_set.jsonl stays tracked)
 data/generations/
 data/reports/
+
+# Editor settings are per-machine (interpreter path differs on Windows/Linux)
+.vscode/
