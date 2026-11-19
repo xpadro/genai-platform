@@ -7,7 +7,8 @@ GenAI platform lab (a learning portfolio). Monorepo with one module per topic.
 - **`llm_client`** — production-ready LLM client layer on top of the Anthropic SDK
   (streaming, retries, fallback, timeouts, cost/token observability). Documented below.
 - **`llm_evals`** — reproducible eval harness (`dataset → runner → grader → report`).
-  **WIP**: dataset + SDLC eval set in place; runner, graders and report pending.
+  Runs end-to-end against the real API; baseline and what it taught in
+  [`llm_evals/README.md`](llm_evals/README.md#baseline-real-runs-2026-11-18).
 
 ---
 
@@ -30,7 +31,8 @@ brick of a future *model gateway*.
 
 ```bash
 python3 -m venv .venv
-source .venv/bin/activate          # macOS/Linux  (Windows: .venv\Scripts\activate)
+source .venv/bin/activate          # macOS/Linux
+# Windows: .venv\Scripts\activate (cmd)  ·  source .venv/Scripts/activate (Git Bash)
 pip install -e ".[dev]"
 ```
 
@@ -46,17 +48,17 @@ python -m pytest -q                # 7 tests, SDK is mocked — no API calls, no
 
 ### 3. Real run (hits the API, costs a few cents)
 
-Provide your key, either as an environment variable:
+You need an API key from the [Claude Console](https://console.anthropic.com) (API usage is
+billed separately; a Claude Pro/Max subscription does not include it). Put it in a `.env`
+file at the repo root (already gitignored):
 
 ```bash
-export ANTHROPIC_API_KEY="sk-ant-..."
+ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-…or in a `.env` file (already gitignored) that you load before running:
-
-```bash
-set -a && source .env && set +a
-```
+`examples/real_run.py` and `python -m llm_evals run` load it automatically via
+`python-dotenv` (installed with the `dev` extra). A variable already exported in your shell
+takes precedence over the `.env` value.
 
 Then run the example. **If your shell sets `ANTHROPIC_BASE_URL`** (e.g. a corporate
 proxy that intercepts the Anthropic SDK), override it to reach the public API
@@ -75,7 +77,9 @@ upward. It always returns an `LLMResult` with a `status`:
 
 | status | meaning |
 |---|---|
-| `ok` | valid response (primary or fallback) |
+| `ok` | **complete** response (primary or fallback); `stop_reason` end_turn / stop_sequence |
+| `truncated` | the model hit `max_tokens`: `text` is a **partial** answer (kept; the caller decides) |
+| `refused` | the model declined (`stop_reason="refusal"`; category in `reason`) |
 | `error` | **permanent** error (400/401/403/404/422): the request must be fixed |
 | `unavailable` | primary retries **and** fallback exhausted: graceful degradation |
 
@@ -85,6 +89,12 @@ upward. It always returns an `LLMResult` with a `status`:
   ones fail fast: retrying them returns the same error and burns latency/money.
 - **Fallback fires only on transient errors**, not permanent ones (another model
   won't fix a malformed prompt).
+- **HTTP 200 is not "ok".** A reply cut at `max_tokens` or a refusal arrives as a
+  successful response; mapping it to `ok` would let callers treat a partial answer
+  as a complete one (in the eval harness, a truncated judge verdict was silently
+  graded "incorrect"). Neither is retried nor sent to the fallback: truncation is
+  fixed by the caller (raise `max_tokens` / tighten the prompt), a refusal is a
+  policy decision. The raw `stop_reason` is kept on every result.
 - **`max_retries` is configurable (default 3).** More retries = more resilience but
   worse tail latency (p99): each retry adds wait + a new call.
 - **Explicit timeout (default 30s).** Short protects p99 but kills legitimately slow

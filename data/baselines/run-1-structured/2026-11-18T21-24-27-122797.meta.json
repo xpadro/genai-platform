@@ -1,0 +1,48 @@
+{
+  "run_id": "2026-11-18T21-24-27-122797",
+  "date": "2026-11-18T21:24:39.961942",
+  "dataset": "data/eval_set.jsonl",
+  "model": "claude-sonnet-4-6",
+  "fallback_model": "claude-haiku-4-5-20251001",
+  "max_tokens": 1024,
+  "system": "Extract metadata from a PR/commit message and respond ONLY with a JSON object with these fields:\n- \"type\": one of [\"feat\",\"fix\",\"refactor\",\"docs\",\"chore\",\"test\"]\n- \"scope\": the affected area of the code as a string, or null if not applicable\n- \"breaking_change\": true or false\n- \"issues\": list of issue keys (e.g. [\"PROJ-123\"]), or [] if none",
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": "string",
+        "enum": [
+          "feat",
+          "fix",
+          "refactor",
+          "docs",
+          "chore",
+          "test"
+        ]
+      },
+      "scope": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "breaking_change": {
+        "type": "boolean"
+      },
+      "issues": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "type",
+      "scope",
+      "breaking_change",
+      "issues"
+    ],
+    "additionalProperties": false
+  },
+  "n_cases": 8
+}

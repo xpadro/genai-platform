@@ -1,0 +1,9 @@
+{
+  "run_id": "2026-11-18T19-25-01-147859",
+  "date": "2026-11-18T19:25:10.015180",
+  "dataset": "data/eval_set.jsonl",
+  "model": "claude-sonnet-4-6",
+  "fallback_model": "claude-haiku-4-5-20251001",
+  "max_tokens": 1024,
+  "n_cases": 8
+}

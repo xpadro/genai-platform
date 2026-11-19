@@ -10,7 +10,7 @@ requires-python = ">=3.10"
 dependencies = ["anthropic>=0.113", "httpx"]
 
 [project.optional-dependencies]
-dev = ["pytest>=8"]
+dev = ["pytest>=8", "python-dotenv>=1.0"]
 
 [tool.setuptools]
 packages = ["llm_client", "llm_evals"]

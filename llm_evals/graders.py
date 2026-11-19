@@ -5,27 +5,28 @@ The json.loads lives here: if the raw doesn't parse, that's a GRADE (parse_error
 LB2 boundary: code-based for the enumerable fields (type/breaking_change/issues),
 LLM-judge for the open-vocabulary one (scope).
 """
+
 from __future__ import annotations
 
 import json
 
-from llm_client import ProductionLLMClient
+from llm_client import LLMClient
 
 # --- Code-based graders (deterministic, 0 LLM calls) ---
 
 
-def grade_type(predicted: str|None, golden: str) -> bool:
+def grade_type(predicted: str | None, golden: str) -> bool:
     if predicted is None:
         return False
 
     return predicted.strip().lower() == golden.strip().lower()
 
 
-def grade_breaking_change(predicted: bool|None, golden: bool) -> bool:
+def grade_breaking_change(predicted: bool | None, golden: bool) -> bool:
     return predicted == golden
 
 
-def grade_issues(predicted: list[str]|None, golden: list[str]) -> bool:
+def grade_issues(predicted: list[str] | None, golden: list[str]) -> bool:
     if predicted is None:
         return False
 
@@ -37,7 +38,7 @@ def grade_issues(predicted: list[str]|None, golden: list[str]) -> bool:
 JUDGE_MODEL = "claude-opus-4-8"  # decoupled; ideally different from/superior to the SUT
 
 
-def grade_scope(predicted: str|None, golden: str, judge_client: ProductionLLMClient) -> bool:
+def grade_scope(predicted: str | None, golden: str, judge_client: LLMClient) -> bool:
     # Code short-circuits before paying for the llm judge
     if predicted == golden:  # null==null and exact-match
         return True
@@ -57,10 +58,12 @@ def grade_scope(predicted: str|None, golden: str, judge_client: ProductionLLMCli
     result = judge_client.complete(
         system="", messages=[{"role": "user", "content": judge_prompt}]
     )
-    
+
     if result.status != "ok":
-        raise RuntimeError(f"judge unavailable: {result.reason}")
-    
+        # Broken instrument != data: a judge that is down, truncated or refused
+        # must stop the run, never be counted as an "incorrect" verdict.
+        raise RuntimeError(f"judge failed (status={result.status}): {result.reason}")
+
     last_line = result.text.strip().splitlines()[-1]
     verdict = last_line.split("VERDICT:")[-1].strip().lower()
     return verdict == "correct"
@@ -69,7 +72,7 @@ def grade_scope(predicted: str|None, golden: str, judge_client: ProductionLLMCli
 # --- Orchestration: grade a full case ---
 
 
-def grade_case(record: dict, judge_client: ProductionLLMClient) -> dict:
+def grade_case(record: dict, judge_client: LLMClient) -> dict:
     # Decision 1: distinct outcomes, without blowing up.
     if record["status"] != "ok":
         return {
@@ -78,7 +81,7 @@ def grade_case(record: dict, judge_client: ProductionLLMClient) -> dict:
             "status": record["status"],
         }
     try:
-        pred = json.loads(record["response"])
+        response = json.loads(record["response"])
     except json.JSONDecodeError:
         return {"case_id": record["case_id"], "outcome": "parse_error"}
 
@@ -87,9 +90,11 @@ def grade_case(record: dict, judge_client: ProductionLLMClient) -> dict:
         "case_id": record["case_id"],
         "outcome": "graded",
         "fields": {
-            "type": grade_type(pred.get("type"), golden["type"]),
-            "breaking_change": grade_breaking_change(pred.get("breaking_change"), golden["breaking_change"]),
-            "issues": grade_issues(pred.get("issues"), golden["issues"]),
-            "scope": grade_scope(pred.get("scope"), golden["scope"], judge_client)
+            "type": grade_type(response.get("type"), golden["type"]),
+            "breaking_change": grade_breaking_change(
+                response.get("breaking_change"), golden["breaking_change"]
+            ),
+            "issues": grade_issues(response.get("issues"), golden["issues"]),
+            "scope": grade_scope(response.get("scope"), golden["scope"], judge_client),
         },
     }
